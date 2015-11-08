@@ -67,11 +67,9 @@ func main() {
 
 	}
 
-	token1 := string("xoxp-4588019148-4634100797-12065127504-531e321d4c")
-
 	msg := make(chan chanMsg, 100)
-	go doSlack(token1, msg)
-	go saveMsg("./db",msg)
+	go doSlack(token, msg)
+	go saveMsg("./db", msg)
 
 	var input string
 	fmt.Scanln(&input)
