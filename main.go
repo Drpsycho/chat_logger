@@ -52,7 +52,7 @@ type chanMsg struct {
 //----------------------------------------------------------------------------
 
 func usage() {
-	fmt.Println("slack-bot v.", VERSION)
+	fmt.Println("chat_logger v.", VERSION)
 	flag.Usage()
 	os.Exit(1)
 }
