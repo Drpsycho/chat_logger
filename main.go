@@ -14,7 +14,8 @@ const (
 //----------------------------------------------------------------------------
 
 var token = flag.String("token", "", "Token for slack")
-var initdb = flag.Bool("init", false, "It's for first run, initialization DB")
+
+// var initdb = flag.Bool("init", false, "It's for first run, initialization DB")
 
 type chanMsg struct {
 	author      string
@@ -38,9 +39,9 @@ func main() {
 	if *token == "" {
 		usage()
 	}
-	if !*initdb {
+	// if !*initdb {
 
-	}
+	// }
 	go func() {
 		var inputs string
 		q := true
@@ -61,11 +62,7 @@ func main() {
 	initDB("./db")
 
 	msg := make(chan chanMsg, 100)
-	quit := make(chan bool)
-
-	go GetAllSlackMsg(*token, msg, quit)
-	SaveMsgSafe(msg, quit)
 
 	go SaveMsg(msg)
-	GetlackMsgEveryDay(*token, msg)
+	GetAllSlackMsg(*token, msg)
 }

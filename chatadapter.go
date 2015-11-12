@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/Drpsycho/now"
+	"fmt"
+	// "github.com/Drpsycho/now"
 	"github.com/nlopes/slack"
 	"strconv"
 	"strings"
@@ -37,45 +38,15 @@ func ConvertToString(t time.Time) string {
 	return strconv.FormatInt(t.Unix(), 10)
 }
 
-func GetAllSlackMsg(token string, mesg chan chanMsg, quit chan bool) {
-	api = slack.New(token)
-
-	FillChannelList()
-	FillUserName()
-
-	params := slack.HistoryParameters{Count: 1000}
-
-	for channelname, channelid := range mapChannels {
-		history, _ := api.GetChannelHistory(channelid, params)
-
-		for messages := range history.Messages {
-			msg := history.Messages[messages]
-			str_timestamp := strings.Split(msg.Timestamp, ".")
-			unixIntValue, _ := strconv.ParseInt(str_timestamp[0], 10, 64)
-			timeStamp := time.Unix(unixIntValue, 0)
-			mesg <- chanMsg{author: mapNames[msg.User],
-				text:        msg.Text,
-				timestamp:   timeStamp,
-				channelId:   channelid,
-				channelName: channelname}
-		}
-	}
-	quit <- true
-}
-
-func GetlackMsgEveryDay(token string, mesg chan chanMsg) {
-	api = slack.New(token)
-
-	FillChannelList()
-	FillUserName()
+func GetAllSlackMsg(token string, mesg chan chanMsg) {
 	for {
-		beginDayToday := now.BeginningOfDay()
-		beginDayBefore := now.OneDayBefore(beginDayToday)
+		api = slack.New(token)
 
-		params := slack.HistoryParameters{
-			Oldest: ConvertToString(beginDayBefore),
-			Latest: ConvertToString(beginDayToday)}
+		FillChannelList()
+		FillUserName()
 
+		params := slack.HistoryParameters{Count: 1000}
+		fmt.Println("Get all message and save it in DB")
 		for channelname, channelid := range mapChannels {
 			history, _ := api.GetChannelHistory(channelid, params)
 
@@ -84,6 +55,7 @@ func GetlackMsgEveryDay(token string, mesg chan chanMsg) {
 				str_timestamp := strings.Split(msg.Timestamp, ".")
 				unixIntValue, _ := strconv.ParseInt(str_timestamp[0], 10, 64)
 				timeStamp := time.Unix(unixIntValue, 0)
+
 				mesg <- chanMsg{author: mapNames[msg.User],
 					text:        msg.Text,
 					timestamp:   timeStamp,
@@ -91,6 +63,10 @@ func GetlackMsgEveryDay(token string, mesg chan chanMsg) {
 					channelName: channelname}
 			}
 		}
+
+		fmt.Println("All message have been saved")
+		fmt.Println("sleep 24 hour")
 		time.Sleep(24 * time.Hour)
 	}
+
 }

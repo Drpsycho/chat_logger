@@ -9,47 +9,18 @@ var workDB db.DB
 var colsName []string
 
 func initDB(pathToDB string) {
-	fmt.Println("create database")
+	fmt.Print("\nData base init...")
 	DB, err := db.OpenDB(pathToDB)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Print("success\n")
 	workDB = *DB
 
+	fmt.Println("Channels:")
 	for _, name := range workDB.AllCols() {
 		fmt.Println(name)
 		colsName = append(colsName, name)
-	}
-}
-
-func SaveMsgSafe(msg chan chanMsg, quit chan bool) {
-	for {
-		select {
-		case inmsg := <-msg:
-			if !CheckNameDB(colsName, inmsg.channelName) {
-				if err := workDB.Create(inmsg.channelName); err != nil {
-					fmt.Println(err)
-				}
-				colsName = append(colsName, inmsg.channelName)
-			}
-
-			channelInDB := workDB.Use(inmsg.channelName)
-
-			if !IsMsgExist("timestamp", inmsg.timestamp.String(), inmsg.channelName) {
-				//				fmt.Println("Message added")
-				_, err := channelInDB.Insert(map[string]interface{}{
-					"name":      inmsg.author,
-					"text":      inmsg.text,
-					"timestamp": inmsg.timestamp.String()})
-				if err != nil {
-					panic(err)
-				}
-			} else {
-				//				fmt.Println("Message already exist")
-			}
-		case <-quit:
-			return
-		}
 	}
 }
 
