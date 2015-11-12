@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Drpsycho/now"
 	"github.com/nlopes/slack"
 	"strconv"
@@ -38,20 +37,13 @@ func ConvertToString(t time.Time) string {
 	return strconv.FormatInt(t.Unix(), 10)
 }
 
-func doSlack(token string, mesg chan chanMsg) {
+func GetAllSlackMsg(token string, mesg chan chanMsg, quit chan bool) {
 	api = slack.New(token)
 
 	FillChannelList()
 	FillUserName()
 
-	beginDayToday := now.BeginningOfDay()
-	beginDayBefore := now.OneDayBefore(beginDayToday)
-
-	fmt.Println(beginDayToday)
-	fmt.Println(beginDayBefore)
-	params := slack.HistoryParameters{
-		Oldest: ConvertToString(beginDayBefore),
-		Latest: ConvertToString(beginDayToday)}
+	params := slack.HistoryParameters{Count: 1000}
 
 	for channelname, channelid := range mapChannels {
 		history, _ := api.GetChannelHistory(channelid, params)
@@ -67,5 +59,38 @@ func doSlack(token string, mesg chan chanMsg) {
 				channelId:   channelid,
 				channelName: channelname}
 		}
+	}
+	quit <- true
+}
+
+func GetlackMsgEveryDay(token string, mesg chan chanMsg) {
+	api = slack.New(token)
+
+	FillChannelList()
+	FillUserName()
+	for {
+		beginDayToday := now.BeginningOfDay()
+		beginDayBefore := now.OneDayBefore(beginDayToday)
+
+		params := slack.HistoryParameters{
+			Oldest: ConvertToString(beginDayBefore),
+			Latest: ConvertToString(beginDayToday)}
+
+		for channelname, channelid := range mapChannels {
+			history, _ := api.GetChannelHistory(channelid, params)
+
+			for messages := range history.Messages {
+				msg := history.Messages[messages]
+				str_timestamp := strings.Split(msg.Timestamp, ".")
+				unixIntValue, _ := strconv.ParseInt(str_timestamp[0], 10, 64)
+				timeStamp := time.Unix(unixIntValue, 0)
+				mesg <- chanMsg{author: mapNames[msg.User],
+					text:        msg.Text,
+					timestamp:   timeStamp,
+					channelId:   channelid,
+					channelName: channelname}
+			}
+		}
+		time.Sleep(24 * time.Hour)
 	}
 }

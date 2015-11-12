@@ -41,12 +41,31 @@ func main() {
 	if !*initdb {
 
 	}
+	go func() {
+		var inputs string
+		q := true
+
+		for q {
+			fmt.Scanln(&inputs)
+			fmt.Println("For quit enter 'q'")
+			fmt.Println("You enter ", inputs)
+			if inputs == "q" {
+				q = false
+			}
+		}
+		fmt.Println("done")
+
+		os.Exit(0)
+	}()
+
+	initDB("./db")
 
 	msg := make(chan chanMsg, 100)
-	go doSlack(*token, msg)
-	go saveMsg("./db", msg)
+	quit := make(chan bool)
 
-	var input string
-	fmt.Scanln(&input)
-	fmt.Println("done")
+	go GetAllSlackMsg(*token, msg, quit)
+	SaveMsgSafe(msg, quit)
+
+	go SaveMsg(msg)
+	GetlackMsgEveryDay(*token, msg)
 }
