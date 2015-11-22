@@ -20,7 +20,6 @@ func FillChannelList() {
 	mapChannels = make(map[string]string)
 	channels, _ := api.GetChannels(false)
 	for k := range channels {
-		//		fmt.Println(channels[k].Name, channels[k].ID)
 		mapChannels[channels[k].Name] = channels[k].ID
 	}
 }
@@ -29,13 +28,8 @@ func FillUserName() {
 	mapNames = make(map[string]string)
 	users, _ := api.GetUsers()
 	for k := range users {
-		//		fmt.Println(users[k].Name, users[k].ID)
 		mapNames[users[k].ID] = users[k].Name
 	}
-}
-
-func ConvertToString(t time.Time) string {
-	return strconv.FormatInt(t.Unix(), 10)
 }
 
 func GetAllSlackMsg(token string, mesg chan chanMsg) {
@@ -54,7 +48,7 @@ func GetAllSlackMsg(token string, mesg chan chanMsg) {
 				msg := history.Messages[messages]
 				str_timestamp := strings.Split(msg.Timestamp, ".")
 				unixIntValue, _ := strconv.ParseInt(str_timestamp[0], 10, 64)
-				timeStamp := time.Unix(unixIntValue, 0)
+				timeStamp := unixIntValue
 
 				mesg <- chanMsg{author: mapNames[msg.User],
 					text:        msg.Text,

@@ -39,9 +39,7 @@ func main() {
 	if *token == "" {
 		usage()
 	}
-	// if !*initdb {
 
-	// }
 	go func() {
 		var inputs string
 		q := true
