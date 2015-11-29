@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	// "github.com/Drpsycho/now"
 	"github.com/nlopes/slack"
 	"strconv"
 	"strings"
@@ -34,27 +33,32 @@ func FillUserName() {
 
 func GetAllSlackMsg(token string, mesg chan chanMsg) {
 	for {
-		api = slack.New(token)
 
-		FillChannelList()
-		FillUserName()
+		{
+			api = slack.New(token)
 
-		params := slack.HistoryParameters{Count: 1000}
-		fmt.Println("Get all message and save it in DB")
-		for channelname, channelid := range mapChannels {
-			history, _ := api.GetChannelHistory(channelid, params)
+			FillChannelList()
+			FillUserName()
 
-			for messages := range history.Messages {
-				msg := history.Messages[messages]
-				str_timestamp := strings.Split(msg.Timestamp, ".")
-				unixIntValue, _ := strconv.ParseInt(str_timestamp[0], 10, 64)
-				timeStamp := unixIntValue
+			SaveChannels(mapChannels)
 
-				mesg <- chanMsg{author: mapNames[msg.User],
-					text:        msg.Text,
-					timestamp:   timeStamp,
-					channelId:   channelid,
-					channelName: channelname}
+			params := slack.HistoryParameters{Count: 1000}
+			fmt.Println("Get all message and save it in DB")
+			for channelname, channelid := range mapChannels {
+				history, _ := api.GetChannelHistory(channelid, params)
+
+				for messages := range history.Messages {
+					msg := history.Messages[messages]
+					str_timestamp := strings.Split(msg.Timestamp, ".")
+					unixIntValue, _ := strconv.ParseInt(str_timestamp[0], 10, 64)
+					timeStamp := unixIntValue
+
+					mesg <- chanMsg{author: mapNames[msg.User],
+						text:        msg.Text,
+						timestamp:   timeStamp,
+						channelId:   channelid,
+						channelName: channelname}
+				}
 			}
 		}
 

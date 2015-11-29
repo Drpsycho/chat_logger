@@ -4,10 +4,6 @@ import (
 	"github.com/boltdb/bolt"
 	"log"
 	"strconv"
-	"bytes"
-	"fmt"
-	"time"
-	"github.com/Drpsycho/now"
 )
 
 var db *bolt.DB
@@ -43,16 +39,17 @@ func SaveMsg(msg chan chanMsg) {
 	}
 }
 
-func Convert2txt(){
-	db.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket([]byte("Events")).Cursor()
-		min := []byte(strconv.FormatInt(now.BeginningOfMonth().Unix(), 10))
-		max := []byte(strconv.FormatInt(time.Now().Unix(), 10))
-		// Iterate over the 90's.
-		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
-			fmt.Printf("%s: %s\n", k, v)
+func SaveChannels(channels map[string]string) {
+	db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte("channels"))
+		if err != nil {
+			log.Fatal(err)
+			return nil
 		}
 
+		for channelname, channelid := range channels {
+			b.Put([]byte(channelid), []byte(channelname))
+		}
 		return nil
 	})
 }
