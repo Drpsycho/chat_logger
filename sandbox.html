@@ -1,0 +1,130 @@
+<html>
+<meta charset="utf-8">
+<body>
+</body>
+<div>
+    Select channel
+    <select id="channelsList"></select>
+</div>
+<div>
+    latest dd/mm/yyyy <input type=date id=latest>
+</div>
+<div>
+    newest dd/mm/yyyy <input type=date id=newest>
+</div>
+<button onclick="GetMsg()">get msg</button>
+<script src="http://momentjs.com/downloads/moment.min.js" type="text/javascript"></script>
+<!-- <script src="/js/moment.min.js" type="text/javascript"></script> -->
+<script>
+document.getElementById('newest').value = moment().format('YYYY-MM-DD');
+document.getElementById('latest').value = moment().subtract(1, 'month').format('YYYY-MM-DD');
+
+var domain = document.location.hostname + (document.location.port ? ':' + document.location.port : '')
+var socket = new WebSocket("ws://" + domain + "/reqdb");
+
+socket.onopen = function() {
+    console.log("Соединение установлено.");
+
+    socket.send(JSON.stringify({
+        to: "server",
+        action: "init",
+        data: "",
+    }));
+};
+
+socket.onerror = function(error) {
+    console.log("Ошибка " + error.message);
+};
+
+socket.onclose = function(event) {
+    if (event.wasClean) {
+        console.log('Соединение закрыто чисто');
+    } else {
+        console.log('Обрыв соединения'); // например, "убит" процесс сервера
+    }
+    console.log('Код: ' + event.code + ' причина: ' + event.reason);
+};
+
+// обработчик входящих сообщений
+socket.onmessage = function(event) {
+    var incomingMessage = event.data;
+    console.log(incomingMessage)
+    parsejson(incomingMessage)
+        // showMessage(incomingMessage);
+};
+
+function GetMsg() {
+    var dateNewest = document.getElementById("newest");
+    var latest = document.getElementById("latest");
+    var channelsList = document.getElementById("channelsList");
+    var newest = new Date(dateNewest.value).getTime() / 1000;
+    var latest = new Date(latest.value).getTime() / 1000;
+    var channel = channelsList.options[channelsList.selectedIndex].value;
+
+    msgpayload = channel + "." + newest + "." + latest
+    sendMsg(msgpayload)
+}
+
+function sendMsg(msgpayload) {
+    var foo = JSON.stringify({
+        to: "server",
+        action: "getmsg",
+        data: new String(msgpayload),
+    });
+    console.log(foo);
+    socket.send(foo);
+}
+
+function parsejson(message) {
+    var event = JSON.parse(message, function(key, value) {
+        switch (key) {
+            case 'data':
+                var divTag = document.createElement("div");
+                var formTag = document.createElement('form');
+
+                divTag.innerHTML = value;
+                divTag.appendChild(formTag);
+
+                document.body.appendChild(divTag);
+                break
+
+            case 'msg':
+
+                break
+
+            case 'users':
+                console.log("users - " + value)
+                break
+
+            case 'channels':
+                if (value) {
+                    console.log("channels - " + value)
+                    var select = document.getElementById("channelsList");
+                    for (var i = 0; i < value.length; i++) {
+                        var opt = value[i];
+                        var el = document.createElement("option");
+                        el.textContent = opt;
+                        el.value = opt;
+                        select.appendChild(el);
+                    }
+                }
+                break
+        }
+        return value;
+    });
+}
+
+// показать сообщение в div#subscribe
+function showMessage(message) {
+
+    // var messageElem = document.createElement('div');
+    // messageElem.appendChild(document.createTextNode(message));
+    // document.getElementById('subscribe').appendChild(messageElem);
+}
+
+// window.onload = function() {
+//  
+var select = document.getElementById("channelsList");
+</script>
+
+</html>

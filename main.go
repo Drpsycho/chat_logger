@@ -40,7 +40,7 @@ func usage() {
 
 var addr = flag.String("addr", "localhost:8080", "http service address")
 
-var homeTempl = template.Must(template.ParseFiles("/home/drpsycho/Yandex.Disk/site/sandbox.html"))
+var homeTempl = template.Must(template.ParseFiles("sandbox.html"))
 var upgrader = websocket.Upgrader{} // use default options
 
 func home(w http.ResponseWriter, r *http.Request) {

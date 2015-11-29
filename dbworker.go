@@ -1,11 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"github.com/boltdb/bolt"
 	"log"
 	"strconv"
-	"bytes"
-	"fmt"
 	"time"
 )
 
@@ -78,7 +77,7 @@ func GetMsgByTime(channel string, newest string, latest string, msg_transfer cha
 			unixIntValue, _ := strconv.ParseInt(string(k), 10, 64)
 			date := time.Unix(unixIntValue, 0)
 			msg_transfer <- date.String() + " " + string(v)
-			fmt.Printf("%s: %s\n", k, v)
+			// fmt.Printf("%s: %s\n", k, v)
 		}
 
 		return nil
