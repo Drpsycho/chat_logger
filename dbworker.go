@@ -1,96 +1,58 @@
 package main
 
 import (
+	"github.com/boltdb/bolt"
+	"log"
+	"strconv"
+	"bytes"
 	"fmt"
-	"github.com/HouzuoGuo/tiedot/db"
+	"time"
+	"github.com/Drpsycho/now"
 )
 
-var workDB db.DB
-var colsName []string
+var db *bolt.DB
+var err error
 
-func initDB(pathToDB string) {
-	fmt.Print("\nData base init...")
-	DB, err := db.OpenDB(pathToDB)
+func InitDB() {
+	db, err = bolt.Open(".db", 0600, nil)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	fmt.Print("success\n")
-	workDB = *DB
+}
 
-	fmt.Println("Channels:")
-	for _, name := range workDB.AllCols() {
-		fmt.Println(name)
-		colsName = append(colsName, name)
-	}
+func CloseDB() {
+	db.Close()
+}
+
+func SaveInBucket(msg chanMsg) {
+	db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(msg.channelName))
+		if err != nil {
+			log.Fatal(err)
+			return nil
+		}
+		b.Put([]byte(strconv.FormatInt(msg.timestamp, 10)), []byte("["+msg.author+"]: "+msg.text))
+		return nil
+	})
 }
 
 func SaveMsg(msg chan chanMsg) {
 	for {
-		inmsg := <-msg
-		if !CheckNameDB(colsName, inmsg.channelName) {
-			if err := workDB.Create(inmsg.channelName); err != nil {
-				fmt.Println(err)
-			}
-			colsName = append(colsName, inmsg.channelName)
-		}
-
-		channelInDB := workDB.Use(inmsg.channelName)
-
-		if !IsMsgExist("timestamp", inmsg.timestamp.String(), inmsg.channelName) {
-			//			fmt.Println("Message added")
-			_, err := channelInDB.Insert(map[string]interface{}{
-				"name":      inmsg.author,
-				"text":      inmsg.text,
-				"timestamp": inmsg.timestamp.String()})
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			//			fmt.Println("Message already exist")
-		}
+		tmp := <-msg
+		SaveInBucket(tmp)
 	}
 }
 
-func IsMsgExist(key, value, collectionName string) bool {
-	// return false
-	query := map[string]interface{}{
-		"eq": value,
-		"in": []interface{}{key},
-	}
-
-	coll := workDB.Use(collectionName)
-
-	indexFound := false
-	for _, path := range coll.AllIndexes() {
-		if path[0] == key {
-			indexFound = true
-			break
+func Convert2txt(){
+	db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte("Events")).Cursor()
+		min := []byte(strconv.FormatInt(now.BeginningOfMonth().Unix(), 10))
+		max := []byte(strconv.FormatInt(time.Now().Unix(), 10))
+		// Iterate over the 90's.
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			fmt.Printf("%s: %s\n", k, v)
 		}
-	}
-	//	fmt.Println("index is found ? ", indexFound)
-	if !indexFound {
-		if err := coll.Index([]string{key}); err != nil {
-			panic(err)
-		}
-	}
 
-	queryResult := make(map[int]struct{})
-	if err := db.EvalQuery(query, coll, &queryResult); err != nil {
-		panic(err)
-	} else {
-		if len(queryResult) > 0 {
-			return true
-		}
-	}
-	return false
-}
-
-func CheckNameDB(colsName []string, t string) bool {
-	for k := range colsName {
-		if colsName[k] == t {
-			// fmt.Println("we already got a channel")
-			return true
-		}
-	}
-	return false
+		return nil
+	})
 }

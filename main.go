@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
+	// "time"
 )
 
 const (
@@ -15,12 +15,10 @@ const (
 
 var token = flag.String("token", "", "Token for slack")
 
-// var initdb = flag.Bool("init", false, "It's for first run, initialization DB")
-
 type chanMsg struct {
 	author      string
 	text        string
-	timestamp   time.Time
+	timestamp   int64
 	channelName string
 	channelId   string
 }
@@ -40,27 +38,21 @@ func main() {
 		usage()
 	}
 
-	go func() {
-		var inputs string
-		q := true
-
-		for q {
-			fmt.Scanln(&inputs)
-			fmt.Println("For quit enter 'q'")
-			fmt.Println("You enter ", inputs)
-			if inputs == "q" {
-				q = false
-			}
-		}
-		fmt.Println("done")
-
-		os.Exit(0)
-	}()
-
-	initDB("./db")
-
 	msg := make(chan chanMsg, 100)
+	InitDB()
 
 	go SaveMsg(msg)
-	GetAllSlackMsg(*token, msg)
+	go GetAllSlackMsg(*token, msg)
+
+	var inputs string
+
+	for {
+		fmt.Scanln(&inputs)
+		fmt.Println("For quit enter 'q'")
+		if inputs == "q" {
+			fmt.Println("done")
+			CloseDB()
+			os.Exit(0)
+		}
+	}
 }
