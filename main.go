@@ -10,6 +10,8 @@ import (
 	"os"
 	"strings"
 
+	auth "github.com/abbot/go-http-auth"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	// "time"
 )
@@ -38,12 +40,12 @@ func usage() {
 	os.Exit(1)
 }
 
-var addr = flag.String("addr", "localhost:8080", "http service address")
+var addr = flag.String("addr", "localhost:9000", "http service address")
 
 var homeTempl = template.Must(template.ParseFiles("sandbox.html"))
 var upgrader = websocket.Upgrader{} // use default options
 
-func home(w http.ResponseWriter, r *http.Request) {
+func home(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
 	homeTempl.Execute(w, "ws://"+r.Host+"/reqdb")
 }
 
@@ -124,15 +126,19 @@ func main() {
 	msg := make(chan chanMsg, 100)
 	InitDB()
 
+	htpasswd := auth.HtpasswdFileProvider("./.htpasswd")
+	authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
+
 	go SaveMsg(msg)
 	go GetAllSlackMsg(*token, msg)
 
-	http.HandleFunc("/reqdb", reqdb)
-	http.HandleFunc("/js/", func(w http.ResponseWriter, r *http.Request) {
+	mx := mux.NewRouter()
+	mx.HandleFunc("/reqdb", reqdb)
+	mx.HandleFunc("/js/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
-	http.HandleFunc("/", home)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	mx.HandleFunc("/", authenticator.Wrap(home))
+	log.Fatal(http.ListenAndServe(*addr, mx))
 
 	var inputs string
 
