@@ -6,6 +6,8 @@ import (
 	"log"
 	"strconv"
 	"time"
+	"os"
+	"github.com/Drpsycho/now"
 )
 
 var db *bolt.DB
@@ -83,4 +85,40 @@ func GetMsgByTime(channel string, newest string, latest string, msg_transfer cha
 		return nil
 	})
 	msg_transfer <- "done"
+}
+
+func WriteMsgToDisk() {
+	for {
+		channels := GetChannelsName()
+		path2folder := "txt/"
+		for ch := range channels {
+			_path := path2folder + channels[ch] + "_" + strconv.Itoa(now.BeginningOfYear().Year())
+			file, err := os.OpenFile(_path, os.O_CREATE|os.O_WRONLY, 0700)
+			if err != nil {
+				panic(err)
+			}
+			defer func() {
+				if err := file.Close(); err != nil {
+					panic(err)
+				}
+			}()
+
+			latest := strconv.FormatInt(now.BeginningOfYear().Unix(), 10)
+			newest := strconv.FormatInt(time.Now().Unix(), 10)
+			msg_transfer := make(chan string, 100)
+			go GetMsgByTime(channels[ch], newest, latest, msg_transfer)
+			for {
+				tmp := <-msg_transfer
+				if tmp == "done" {
+					break
+				}
+
+				if _, err = file.WriteString(tmp); err != nil {
+					panic(err)
+				}
+
+			}
+		}
+		time.Sleep(24 * time.Hour)
+	}
 }
