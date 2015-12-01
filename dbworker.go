@@ -38,8 +38,7 @@ func SaveInBucket(msg chanMsg) {
 
 func SaveMsg(msg chan chanMsg) {
 	for {
-		tmp := <-msg
-		SaveInBucket(tmp)
+		SaveInBucket(<-msg)
 	}
 }
 
@@ -78,8 +77,7 @@ func GetMsgByTime(channel string, newest string, latest string, msg_transfer cha
 		for k, v := c.Seek([]byte(latest)); k != nil && bytes.Compare(k, []byte(newest)) <= 0; k, v = c.Next() {
 			unixIntValue, _ := strconv.ParseInt(string(k), 10, 64)
 			date := time.Unix(unixIntValue, 0)
-			msg_transfer <- date.String() + " " + string(v)
-			// fmt.Printf("%s: %s\n", k, v)
+			msg_transfer <- date.Format("2006-01-02 15:04:05") + " " + string(v) + "\n"
 		}
 
 		return nil
