@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
+	"github.com/Drpsycho/now"
 	"github.com/boltdb/bolt"
 	"log"
+	"os"
 	"strconv"
 	"time"
-	"os"
-	"github.com/Drpsycho/now"
 )
 
 var db *bolt.DB
@@ -88,6 +88,7 @@ func GetMsgByTime(channel string, newest string, latest string, msg_transfer cha
 }
 
 func WriteMsgToDisk() {
+	time.Sleep(1 * time.Minute)
 	for {
 		channels := GetChannelsName()
 		path2folder := "txt/"
