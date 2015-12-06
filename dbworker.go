@@ -91,8 +91,8 @@ func WriteMsgToDisk() {
 		channels := GetChannelsName()
 		path2folder := "txt/"
 		for ch := range channels {
-			_path := path2folder + channels[ch] + "_" + strconv.Itoa(now.BeginningOfYear().Year())
-			file, err := os.OpenFile(_path, os.O_CREATE|os.O_WRONLY, 0700)
+			_path := path2folder + channels[ch] + "_" + strconv.Itoa(now.BeginningOfYear().Year()) + ".txt"
+			file, err := os.OpenFile(_path, os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				panic(err)
 			}
@@ -118,6 +118,6 @@ func WriteMsgToDisk() {
 
 			}
 		}
-		time.Sleep(24 * time.Hour)
+		time.Sleep(3 * time.Hour)
 	}
 }

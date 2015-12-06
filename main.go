@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	VERSION = "0.1"
+	VERSION = "0.2"
 )
 
 var token = flag.String("token", "", "Token for slack")
@@ -22,6 +22,7 @@ type chanMsg struct {
 }
 
 func main() {
+	fmt.Println("chat_logger v.", VERSION)
 	flag.Parse()
 	log.SetFlags(0)
 	if *token == "" {
@@ -50,7 +51,6 @@ func main() {
 }
 
 func usage() {
-	fmt.Println("chat_logger v.", VERSION)
 	flag.Usage()
 	os.Exit(1)
 }

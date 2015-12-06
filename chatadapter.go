@@ -33,7 +33,6 @@ func FillUserName() {
 
 func GetAllSlackMsg(token string, mesg chan chanMsg) {
 	for {
-
 		{
 			api = slack.New(token)
 
@@ -63,8 +62,8 @@ func GetAllSlackMsg(token string, mesg chan chanMsg) {
 		}
 
 		fmt.Println("All message have been saved")
-		fmt.Println("sleep 24 hour")
-		time.Sleep(24 * time.Hour)
+		fmt.Println("sleep 3 hour")
+		time.Sleep(3 * time.Hour)
 	}
 
 }
