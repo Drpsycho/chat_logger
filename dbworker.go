@@ -96,12 +96,6 @@ func WriteMsgToDisk() {
 			if err != nil {
 				panic(err)
 			}
-			defer func() {
-				if err := file.Close(); err != nil {
-					panic(err)
-				}
-			}()
-
 			latest := strconv.FormatInt(now.BeginningOfYear().Unix(), 10)
 			newest := strconv.FormatInt(time.Now().Unix(), 10)
 			msg_transfer := make(chan string, 100)
@@ -117,7 +111,11 @@ func WriteMsgToDisk() {
 				}
 
 			}
-		}
+					if err := file.Close(); err != nil {
+					panic(err)
+				}
+
+	}
 		time.Sleep(3 * time.Hour)
 	}
 }
